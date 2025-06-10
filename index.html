@@ -106,6 +106,17 @@
             margin-bottom: 12px;
         }
 
+        .script-warning {
+            background: #dc3545;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            border: 1px solid #c82333;
+        }
+
         .script-category {
             display: inline-block;
             background: #0084ff;
@@ -253,6 +264,7 @@
                 title: "Discord Webhook IP Sender",
                 category: "Python",
                 description: "A Python script that fetches your public IP and sends it to a Discord webhook",
+                warning: "Warning: This Python Script sends your IP, it uses Webhook",
                 code: `import requests
 import json
 from datetime import datetime
@@ -393,6 +405,7 @@ if __name__ == "__main__":
                     <div class="script-header">
                         <div class="script-title">${script.title}</div>
                         <div class="script-description">${script.description}</div>
+                        ${script.warning ? `<div class="script-warning">${script.warning}</div>` : ''}
                         <div class="script-category ${categoryClass}">${script.category}</div>
                     </div>
                     <div class="script-code">
