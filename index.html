@@ -43,6 +43,44 @@
             font-size: 1.1em;
         }
 
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 15px 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .tab-button:hover {
+            color: #ffffff;
+            background: #2a2a2a;
+        }
+
+        .tab-button.active {
+            color: #0084ff;
+            border-bottom-color: #0084ff;
+            background: #2a2a2a;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .script-item {
             background: #2a2a2a;
             border-radius: 12px;
@@ -78,6 +116,10 @@
             font-weight: 500;
         }
 
+        .script-category.python {
+            background: #3776ab;
+        }
+
         .script-code {
             background: #1a1a1a;
             padding: 20px;
@@ -96,6 +138,8 @@
             overflow-x: auto;
             white-space: pre;
             border: 1px solid #222;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
         .copy-btn {
@@ -148,6 +192,11 @@
             .script-code {
                 padding: 16px;
             }
+
+            .tab-button {
+                padding: 12px 15px;
+                font-size: 1em;
+            }
         }
     </style>
 </head>
@@ -158,13 +207,26 @@
             <p>Script Hub Share Idk</p>
         </div>
 
-        <div id="scriptsContainer">
-            <!-- Scripts will be rendered here -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('lua')">Lua Scripts</button>
+            <button class="tab-button" onclick="switchTab('python')">Python Scripts</button>
+        </div>
+
+        <div id="luaTab" class="tab-content active">
+            <div id="luaScriptsContainer">
+                <!-- Lua scripts will be rendered here -->
+            </div>
+        </div>
+
+        <div id="pythonTab" class="tab-content">
+            <div id="pythonScriptsContainer">
+                <!-- Python scripts will be rendered here -->
+            </div>
         </div>
     </div>
 
     <script>
-        let scripts = [
+        let luaScripts = [
             {
                 title: "ConsoleX",
                 category: "Script",
@@ -186,28 +248,173 @@
             }
         ];
 
-        function renderScripts() {
-            const container = document.getElementById('scriptsContainer');
+        let pythonScripts = [
+            {
+                title: "Discord Webhook IP Sender",
+                category: "Python",
+                description: "A Python script that fetches your public IP and sends it to a Discord webhook",
+                code: `import requests
+import json
+from datetime import datetime
+
+def get_public_ip():
+    """
+    Fetch the public IP address using ipify.org.
+    
+    Returns:
+        str: Public IP address or None if the request fails.
+    """
+    try:
+        response = requests.get("https://api.ipify.org", timeout=5)
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching IP: {e}")
+        return None
+
+def send_discord_webhook(webhook_url, message=None, embed=None, username=None, avatar_url=None):
+    """
+    Send a POST request to a Discord webhook URL.
+    
+    Args:
+        webhook_url (str): The Discord webhook URL.
+        message (str, optional): The plain text message to send.
+        embed (dict, optional): A Discord embed object.
+        username (str, optional): Custom username for the webhook.
+        avatar_url (str, optional): URL for the webhook's avatar.
+    
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    try:
+        payload = {}
+        if message:
+            payload["content"] = message
+        if embed:
+            payload["embeds"] = [embed]
+        if username:
+            payload["username"] = username
+        if avatar_url:
+            payload["avatar_url"] = avatar_url
+
+        if not payload.get("content") and not payload.get("embeds"):
+            print("Error: Message or embed is required.")
+            return False
+
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(
+            webhook_url,
+            data=json.dumps(payload),
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code in [200, 204]:
+            print("Webhook sent successfully.")
+            return True
+        else:
+            print(f"Failed to send webhook: {response.status_code} - {response.text}")
+            return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending webhook: {e}")
+        return False
+
+# Your Discord webhook URL
+webhook_url = "======"
+
+# Example usage
+if __name__ == "__main__":
+    # Fetch public IP
+    public_ip = get_public_ip()
+
+    if public_ip:
+        # Simple message with IP
+        message = f"My public IP address is: {public_ip} (Sent at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+        send_discord_webhook(
+            webhook_url,
+            message=message,
+            username="IP Bot",
+            avatar_url="https://i.imgur.com/4M34hi2.png"
+        )
+
+        # Embed with IP
+        embed = {
+            "title": "Public IP Address",
+            "description": f"Your public IP is: **{public_ip}**",
+            "color": 0x5865F2,  # Discord blurple
+            "fields": [
+                {"name": "Timestamp", "value": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "inline": True}
+            ],
+            "footer": {"text": "Powered by Grok"}
+        }
+        send_discord_webhook(
+            webhook_url,
+            message="Here's your IP in an embed!",
+            embed=embed,
+            username="IP Embed Bot"
+        )
+    else:
+        # Send error message if IP fetch fails
+        send_discord_webhook(
+            webhook_url,
+            message="Failed to fetch public IP address.",
+            username="IP Bot"
+        )`
+            }
+        ];
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            if (tabName === 'lua') {
+                document.getElementById('luaTab').classList.add('active');
+                document.querySelector('[onclick="switchTab(\'lua\')"]').classList.add('active');
+            } else if (tabName === 'python') {
+                document.getElementById('pythonTab').classList.add('active');
+                document.querySelector('[onclick="switchTab(\'python\')"]').classList.add('active');
+            }
+        }
+
+        function renderScripts(scripts, containerId, categoryClass = '') {
+            const container = document.getElementById(containerId);
 
             container.innerHTML = scripts.map((script, index) => `
                 <div class="script-item">
                     <div class="script-header">
                         <div class="script-title">${script.title}</div>
                         <div class="script-description">${script.description}</div>
-                        <div class="script-category">${script.category}</div>
+                        <div class="script-category ${categoryClass}">${script.category}</div>
                     </div>
                     <div class="script-code">
                         <div class="code-block">${script.code}</div>
-                        <button class="copy-btn" onclick="copyCode(${index})">Copy</button>
+                        <button class="copy-btn" onclick="copyCode('${containerId}', ${index})">Copy</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function copyCode(index) {
+        function copyCode(containerId, index) {
+            let scripts;
+            if (containerId === 'luaScriptsContainer') {
+                scripts = luaScripts;
+            } else if (containerId === 'pythonScriptsContainer') {
+                scripts = pythonScripts;
+            }
+            
             const code = scripts[index].code;
             navigator.clipboard.writeText(code).then(() => {
-                const btn = document.querySelectorAll('.copy-btn')[index];
+                const container = document.getElementById(containerId);
+                const btn = container.querySelectorAll('.copy-btn')[index];
                 const originalText = btn.textContent;
                 btn.textContent = 'Copied!';
                 btn.classList.add('copied');
@@ -219,7 +426,8 @@
         }
 
         // Initial render
-        renderScripts();
+        renderScripts(luaScripts, 'luaScriptsContainer');
+        renderScripts(pythonScripts, 'pythonScriptsContainer', 'python');
     </script>
 </body>
 </html>
